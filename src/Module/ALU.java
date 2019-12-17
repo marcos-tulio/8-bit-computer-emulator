@@ -8,27 +8,22 @@ import Emulator.Computer;
  */
 public class ALU {
 
-    private boolean output = false;
-
     private byte value = 0x00;
+    private boolean output = false;
 
     private boolean xorNot = false;
     private boolean addSub = false;
     private boolean accOne = false;
     private boolean accZero = false;
 
-    private String operation = "add";    
-    
-    public boolean getOutput() {
+    private String operation = "add";
+
+    public boolean isOutput() {
         return output;
     }
 
     public void setOutput(boolean output) {
         this.output = output;
-
-        refresh();
-
-        Computer.bus.setValue(value);
     }
 
     public boolean getAccZero() {
@@ -37,7 +32,6 @@ public class ALU {
 
     public void setAccZero(boolean accZero) {
         this.accZero = accZero;
-        refresh();
     }
 
     public boolean getAccOne() {
@@ -46,7 +40,6 @@ public class ALU {
 
     public void setAccOne(boolean accOne) {
         this.accOne = accOne;
-        refresh();
     }
 
     public boolean getXorNot() {
@@ -55,7 +48,6 @@ public class ALU {
 
     public void setXorNot(boolean xorNot) {
         this.xorNot = xorNot;
-        refresh();
     }
 
     public boolean getAddSub() {
@@ -64,7 +56,6 @@ public class ALU {
 
     public void setAddSub(boolean addSub) {
         this.addSub = addSub;
-        refresh();
     }
 
     public byte getValue() {
@@ -106,15 +97,9 @@ public class ALU {
             value = (byte) (Computer.accumulator.getValue() | Computer.bRegister.getValue());
             operation = "or";
         }
-        
-        // Atuali. o barramento
-        if (getOutput())
-            Computer.bus.setValue(getValue());
     }
 
     public String getOperation() {
         return operation;
     }
-    
-    
 }

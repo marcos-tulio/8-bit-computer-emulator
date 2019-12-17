@@ -2,7 +2,7 @@ package Screen.Panel;
 
 import Model.PanelWithCicle;
 import Screen.Cicle;
-import Screen.Util;
+import Model.Util;
 import javax.swing.JLabel;
 import javax.swing.border.EtchedBorder;
 import net.miginfocom.swing.MigLayout;
@@ -19,8 +19,8 @@ public class PanelBus extends PanelWithCicle {
         setBorder(new EtchedBorder());
         setLayout(new MigLayout("w 280:280:280"));
 
-        add(Util.lblTitle("Bus"), "span, growx, pushx, wrap");
-        add(Util.label("Value: "), "newline");
+        add(Util.createTitleLabel("Bus"), "span, growx, pushx, wrap");
+        add(Util.createLabel("Value: "), "newline");
 
         for (Cicle signal : value) {
             add(signal, "pushx");

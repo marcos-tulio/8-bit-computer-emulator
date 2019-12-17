@@ -13,7 +13,7 @@ public final class Counter implements EdgeTrigger {
     protected byte value = 0x00;
 
     protected boolean enable = true;
-    protected boolean increment = true;
+    protected boolean increment = false;
     protected boolean jump = false;
     protected boolean output = false;
 
@@ -31,18 +31,10 @@ public final class Counter implements EdgeTrigger {
 
     public void setEnable(boolean enable) {
         this.enable = enable;
-
-        if (isOutput()) {
-            if (isEnable())
-                Computer.bus.setLsb(getValue());
-            else
-                Computer.bus.clearLsb();
-        }
     }
 
     public void setIncrement(boolean inc) {
         increment = inc;
-
     }
 
     public boolean isIncrement() {
@@ -55,11 +47,6 @@ public final class Counter implements EdgeTrigger {
 
     public void setOutput(boolean output) {
         this.output = output;
-
-        if (isOutput())
-            Computer.bus.setValue(getValue());
-        else
-            Computer.bus.clear();
     }
 
     public byte getValue() {
@@ -67,16 +54,16 @@ public final class Counter implements EdgeTrigger {
     }
 
     public void setValue(byte value) {
-        this.value = value;
+        this.value = (byte) (value & 0x0F); // Limitar a 15
     }
 
     public void increment() {
         if (isEnable()) {
-            setValue((byte) (getValue() + 1));
-
-            // Zera o nibble
-            if (getValue() > 0x0F)
-                setValue((byte) 0x00);
+            // Contador ciclo 0 a 15
+            if (getValue() + 1 > 0x0F)
+                reset();
+            else
+                setValue((byte) (getValue() + 1));
         }
     }
 
@@ -92,9 +79,6 @@ public final class Counter implements EdgeTrigger {
 
             if (isJump())
                 setValue(Computer.bus.getLsb());
-
-            if (isOutput())
-                Computer.bus.setLsb(getValue());
         }
     }
 

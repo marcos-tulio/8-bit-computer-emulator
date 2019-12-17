@@ -1,12 +1,6 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Model;
 
 import Screen.Cicle;
-import Screen.Util;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -18,7 +12,7 @@ import javax.swing.JTextField;
 public class PanelWithCicle extends JPanel {
 
     protected final Cicle[] value;
-    protected final JTextField txtValue = Util.txt();
+    protected final JTextField txtValue = Util.createTextField();
 
     public PanelWithCicle(int cicleAmount) {
         value = new Cicle[cicleAmount];
@@ -36,8 +30,14 @@ public class PanelWithCicle extends JPanel {
             else
                 this.value[(this.value.length - 1) - i].setGray();  // Pos. complementar 
         }
-        
+
         txtValue.setText((value & 0xFF) + "");
-        repaint();
+    }
+
+    public void changeColor(boolean value, Cicle cicle) {
+        if (value)
+            cicle.setGreen();
+        else
+            cicle.setGray();
     }
 }

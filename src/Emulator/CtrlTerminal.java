@@ -1,9 +1,17 @@
 package Emulator;
 
-import Model.Register;
+import Model.Util;
+import Module.Register;
 import Screen.TerminalIO;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -11,11 +19,15 @@ import java.awt.event.KeyEvent;
  */
 public class CtrlTerminal {
 
+    /* Thread para rodar o computador. */
+    private Thread threadRun = null;
+    private boolean stopRun = false;
+
     private TerminalIO terminal;
     private String line;
 
-    public void setInput(TerminalIO terminal) {
-        this.terminal = terminal;
+    public CtrlTerminal() {
+        this.terminal = Computer.screen.getTerminal();
 
         terminal.addKeyListener(new KeyAdapter() {
 
@@ -30,7 +42,7 @@ public class CtrlTerminal {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER)
-                    terminal.setCaretPosition(terminal.getDocument().getLength());
+                    terminal.resetCursor();
             }
 
             @Override
@@ -65,12 +77,17 @@ public class CtrlTerminal {
                 removeFlag("counter");
                 counter();
 
-            } else if (line.startsWith("acc")) {
-                removeFlag("acc");
-                register(Computer.accumulator);
+            } else if (line.startsWith("mar")) {
+                removeFlag("mar");
+                register(Computer.mar);
 
-            } else if (line.startsWith("areg")) {
+            } else if (line.startsWith("output")) {
+                removeFlag("output");
+                register(Computer.output);
+
+            } else if (line.startsWith("acc") || line.startsWith("areg")) {
                 removeFlag("areg");
+                removeFlag("acc");
                 register(Computer.accumulator);
 
             } else if (line.startsWith("breg")) {
@@ -81,24 +98,18 @@ public class CtrlTerminal {
                 removeFlag("ins");
                 register(Computer.instruction);
 
-            } else if (line.startsWith("bus")) {
-                removeFlag("bus");
-                bus();
-
             } else if (line.startsWith("alu")) {
                 removeFlag("alu");
                 alu();
-
-            } else if (line.startsWith("state")) {
-                removeFlag("state");
-                state();
 
             } else {
                 general();
             }
         } catch (Exception e) {
-            terminal.printError();
+            terminal.outError();
         }
+
+        Computer.refreshParallelBits();
         Computer.screen.refresh();
         terminal.newLine();
     }
@@ -108,92 +119,51 @@ public class CtrlTerminal {
     }
 
     private void run() {
-        new Thread(() -> {
-            while (true) {
-                Computer.clock.fullCycle();
-                Computer.clock.setAuto(true);
-            }
-        }).start();
-    }
+        if (threadRun == null || !threadRun.isAlive()) {
+            threadRun = new Thread(() -> {
+                stopRun = false;
 
-    private void state() {
-        /*terminal.println("");
-        terminal.println("::::::::::::: Bus ::::::::::::::");
-        terminal.print("  ");
-        printByte(Computer.bus.getValue());
-        terminal.println("::::::::::::::::::::::::::::::::\n");
-
-        terminal.println(":::::::: Program Counter :::::::");
-        terminal.println("     In: " + getBit(Computer.counter.isInput()));
-        terminal.println("    Out: " + getBit(Computer.counter.isOutput()));
-        terminal.println(" Enable: " + getBit(Computer.counter.isEnable()));
-        terminal.print("  ");
-        printNibble(Computer.counter.getValue());
-        terminal.println("::::::::::::::::::::::::::::::::\n");
-
-        terminal.println("::::::::: Accumulator ::::::::::");
-        terminal.println("     In: " + getBit(Computer.accumulator.isInput()));
-        terminal.println("    Out: " + getBit(Computer.accumulator.isOutput()));
-        terminal.print("  ");
-        printByte(Computer.accumulator.getValue());
-        terminal.println("::::::::::::::::::::::::::::::::\n");
-
-        terminal.println(":::::::::: B Register ::::::::::");
-        terminal.println("     In: " + getBit(Computer.bRegister.isInput()));
-        terminal.println("    Out: " + getBit(Computer.bRegister.isOutput()));
-        terminal.print("  ");
-        printByte(Computer.bRegister.getValue());
-        terminal.println("::::::::::::::::::::::::::::::::\n");
-
-        terminal.println("::::::::::::: ALU ::::::::::::::");
-        terminal.println("    Out: " + getBit(Computer.alu.getOutput()));
-        terminal.println("  Acc 0: " + getBit(Computer.alu.getAccZero()));
-        terminal.println("  Acc 1: " + getBit(Computer.alu.getAccOne()));
-        terminal.println("Add_Sub: " + getBit(Computer.alu.getAddSub()));
-        terminal.println("Xor_Not: " + getBit(Computer.alu.getXorNot()));
-        terminal.print("  ");
-        printByte(Computer.alu.getValue());
-        terminal.println("::::::::::::::::::::::::::::::::\n");*/
+                terminal.outln("Computer running...");
+                while (!stopRun) {
+                    Computer.control.getClock().fullCycle();
+                    Computer.control.getClock().setAuto(true);
+                }
+            });
+            threadRun.start();
+        } else
+            terminal.outln("Computer is already running!");
     }
 
     private boolean clock() {
         if (line.startsWith("frequency")) {
-            // ---- FREQUENCY ----//
-            line = line.replace("frequency", "");
+            removeFlag("frequency");
 
-            if (line.isEmpty()) {
-                terminal.println(Computer.clock.getFrequency() + "Hz");
-            } else {
-                Computer.clock.setFrequency(Float.parseFloat(line));
-            }
+            if (line.isEmpty())
+                terminal.println(Computer.control.getClock().getFrequency() + "Hz");
+            else
+                Computer.control.getClock().setFrequency(Float.parseFloat(line));
 
         } else if (line.startsWith("auto")) {
-            line = line.replace("auto", "");
+            removeFlag("auto");
 
             if (line.isEmpty())
-                terminal.println(getBit(Computer.clock.isAuto()));
+                terminal.println(getBit(Computer.control.getClock().isAuto()));
             else
-                Computer.clock.setAuto(toBool(line));
+                Computer.control.getClock().setAuto(getBoolInLine());
 
         } else if (line.startsWith("halt")) {
-            line = line.replace("halt", "");
+            removeFlag("halt");
 
             if (line.isEmpty())
-                terminal.println(getBit(Computer.clock.isHalt()));
+                terminal.println(getBit(Computer.control.getClock().isHalt()));
             else
-                Computer.clock.setHalt(toBool(line));
-
-        } else if (line.startsWith("info")) {
-            // ---- INFO ----//
-            terminal.println("Auto: " + getBit(Computer.clock.isAuto()));
-            terminal.println("Halt: " + getBit(Computer.clock.isHalt()));
-            terminal.println("Frequency: " + Computer.clock.getFrequency() + "Hz");
+                Computer.control.getClock().setHalt(getBoolInLine());
 
         } else if (line.startsWith("toggle")) {
-            Computer.clock.halfCycle();
+            Computer.control.getClock().halfCycle();
             return true;
         } else {
-            Computer.clock.fullCycle();
+            Computer.control.getClock().fullCycle();
             return true;
         }
 
@@ -202,111 +172,51 @@ public class CtrlTerminal {
 
     private void alu() {
         if (line.startsWith("acc0")) {
-            line = line.replace("acc0", "");
+            removeFlag("acc0");
+            Computer.alu.setAccZero(getBoolInLine());
 
-            if (line.isEmpty())
-                terminal.println(getBit(Computer.alu.getAccZero()));
-            else
-                Computer.alu.setAccZero(toBool(line));
         } else if (line.startsWith("acc1")) {
-            line = line.replace("acc1", "");
+            removeFlag("acc1");
+            Computer.alu.setAccOne(getBoolInLine());
 
-            if (line.isEmpty())
-                terminal.println(getBit(Computer.alu.getAccOne()));
-            else
-                Computer.alu.setAccOne(toBool(line));
-        } else if (line.startsWith("add_sub")) {
-            line = line.replace("add_sub", "");
+        } else if (line.startsWith("add")) {
+            removeFlag("add_sub");
+            removeFlag("addsub");
+            removeFlag("add");
+            Computer.alu.setAddSub(getBoolInLine());
 
-            if (line.isEmpty())
-                terminal.println(getBit(Computer.alu.getAddSub()));
-            else
-                Computer.alu.setAddSub(toBool(line));
-        } else if (line.startsWith("xor_not")) {
-            line = line.replace("xor_not", "");
-
-            if (line.isEmpty())
-                terminal.println(getBit(Computer.alu.getXorNot()));
-            else
-                Computer.alu.setXorNot(toBool(line));
+        } else if (line.startsWith("xor")) {
+            removeFlag("xor_not");
+            removeFlag("xornot");
+            removeFlag("xor");
+            Computer.alu.setXorNot(getBoolInLine());
 
         } else if (line.startsWith("out")) {
-            // ---- ouput ----//
-            line = line.replace("out", "");
-
-            if (line.isEmpty()) {
-                terminal.println(getBit(Computer.alu.getOutput()));
-            } else {
-                Computer.alu.setOutput(toBool(line));
-            }
+            removeFlag("out");
+            Computer.alu.setOutput(getBoolInLine());
 
         } else
-            printByte(Computer.alu.getValue());
-    }
-
-    private void bus() {
-        if (line.startsWith("load")) {
-            // ---- JUMP ----//
-            line = line.replace("load", "");
-
-            if (line.isEmpty()) {
-                printByte(Computer.bus.getValue());
-            } else {
-                // Binary format
-                if (line.startsWith("b")) {
-                    line = line.replace("b", "");
-                    Computer.bus.setValue((byte) (Integer.parseInt(line, 2) & 0xFF));
-                } else {
-                    // Decimal format
-                    Computer.bus.setValue((byte) (Integer.parseInt(line) & 0xFF));
-                }
-            }
-        } else {
-            printByte(Computer.bus.getValue());
-        }
+            terminal.outError();
     }
 
     private void register(Register register) {
         if (line.startsWith("load")) {
-            line = line.replace("load", "");
+            removeFlag("load");
+            register.setValue(getByteInLine());
 
-            if (line.isEmpty()) {
-                printByte(register.getValue());
-            } else {
-                // Binary format
-                if (line.startsWith("b")) {
-                    line = line.replace("b", "");
-                    register.setValue((byte) (Integer.parseInt(line, 2) & 0xFF));
-                } else {
-                    // Decimal format
-                    register.setValue((byte) (Integer.parseInt(line) & 0xFF));
-                }
-            }
         } else if (line.startsWith("in")) {
-            // ---- input ----//
-            line = line.replace("in", "");
-
-            if (line.isEmpty()) {
-                terminal.println(getBit(register.isInput()));
-            } else {
-                register.setInput(toBool(line));
-            }
+            removeFlag("in");
+            register.setInput(getBoolInLine());
 
         } else if (line.startsWith("out")) {
-            // ---- ouput ----//
-            line = line.replace("out", "");
-
-            if (line.isEmpty()) {
-                terminal.println(getBit(register.isOutput()));
-            } else {
-                register.setOutput(toBool(line));
-            }
+            removeFlag("out");
+            register.setOutput(getBoolInLine());
 
         } else if (line.startsWith("reset")) {
             register.reset();
 
         } else {
-            printByte(register.getValue());
+            terminal.outError();
         }
     }
 
@@ -323,87 +233,63 @@ public class CtrlTerminal {
                 terminal.clear();
                 break;
 
+            case "reset":
+                Computer.control.reset();
+                break;
+
+            case "repaint":
+                Computer.screen.repaint();
+                break;
+
+            case "asm":
+                asm();
+                break;
+
+            case "stop": {
+                if (threadRun != null && threadRun.isAlive()) {
+                    try {
+                        stopRun = true;
+                        threadRun.join();
+                        terminal.outln("Computer stopped!");
+                    } catch (InterruptedException ex) {
+                        System.err.println("Thread stop error!");
+                    }
+                } else
+                    terminal.outln("Computer is not running!");
+            }
+            break;
+
             default:
-                terminal.println("Comando inválido!");
+                terminal.outError();
         }
-    }
-
-    private String formatByte(byte b) {
-        return String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0');
-    }
-
-    private String formatNibble(byte b) {
-        return String.format("%4s", Integer.toBinaryString(b & 0xF)).replace(' ', '0');
-    }
-
-    private void printNibble(byte b) {
-        terminal.print("Value: " + formatNibble(b));
-        terminal.println("(2) :: " + (b & 0xFF) + "(10)");
-    }
-
-    private void printByte(byte b) {
-        terminal.print("Value: " + formatByte(b));
-        terminal.println("(2) :: " + (b & 0xFF) + "(10)");
-    }
-
-    private String getBit(boolean b) {
-        if (b)
-            return "1";
-
-        return "0";
-    }
-
-    private boolean toBool(String str) {
-        return str.equalsIgnoreCase("true") || str.equals("1");
     }
 
     private void counter() {
         if (line.startsWith("load")) {
             removeFlag("load");
+            Computer.counter.setValue(getByteInLine());
 
-            if (line.isEmpty()) {
-                printNibble(Computer.counter.getValue());
-            } else {
-                // Binary format
-                if (line.startsWith("b")) {
-                    line = line.replace("b", "");
-                    Computer.counter.setValue((byte) (Integer.parseInt(line, 2) & 0xFF));
-                } else {
-                    // Decimal format
-                    Computer.counter.setValue((byte) (Integer.parseInt(line) & 0xFF));
-                }
-            }
+        } else if (line.startsWith("enable")) {
+            removeFlag("enable");
+            Computer.counter.setEnable(getBoolInLine());
+
         } else if (line.startsWith("jump")) {
             removeFlag("jump");
-
-            if (line.isEmpty()) {
-                terminal.println(getBit(Computer.counter.isJump()));
-            } else {
-                Computer.counter.setJump(toBool(line));
-            }
+            Computer.counter.setJump(getBoolInLine());
 
         } else if (line.startsWith("inc")) {
             removeFlag("inc");
-
-            if (line.isEmpty())
-                terminal.println(getBit(Computer.counter.isIncrement()));
-            else
-                Computer.counter.setIncrement(toBool(line));
+            Computer.counter.setIncrement(getBoolInLine());
 
         } else if (line.startsWith("out")) {
             removeFlag("out");
-
-            if (line.isEmpty()) {
-                terminal.println(getBit(Computer.counter.isOutput()));
-            } else {
-                Computer.counter.setOutput(toBool(line));
-            }
+            Computer.counter.setOutput(getBoolInLine());
 
         } else if (line.startsWith("reset")) {
             Computer.counter.reset();
 
         } else {
-            printNibble(Computer.counter.getValue());
+            terminal.outError();
         }
     }
 
@@ -412,10 +298,9 @@ public class CtrlTerminal {
             removeFlag("load");
 
             if (!line.isEmpty()) {
-                int addr;
-                byte value;
-
                 if (line.startsWith("addr")) {
+                    int addr;
+
                     if (line.startsWith("addrb")) {
                         removeFlag("addrb");
                         addr = Integer.parseInt(line.substring(0, line.indexOf("val")), 2) & 0xFF;
@@ -425,27 +310,110 @@ public class CtrlTerminal {
                     }
 
                     line = line.substring(line.indexOf("v") + "val".length());
-
-                    if (line.startsWith("b")) {
-                        removeFlag("b");
-                        value = (byte) (Integer.parseInt(line, 2) & 0xFF);
-                    } else
-                        value = (byte) (Integer.parseInt(line) & 0xFF);
-
-                    Computer.ram.setValue(addr, value);
-                } else
-                    terminal.printError();
-
-                /*terminal.print("Command invalid!");
-
-                // Binary format
-                if (line.startsWith("b")) {
-                    line = line.replace("b", "");
-                    Computer.counter.setValue((byte) (Integer.parseInt(line, 2) & 0xFF));
+                    Computer.ram.setContent(addr, getByteInLine());
                 } else {
-                    // Decimal format
-                    Computer.counter.setValue((byte) (Integer.parseInt(line) & 0xFF));
-                }*/
+                    if (Computer.ram.isRead()) {
+                        terminal.outln("Alert: ram is in read mode!");
+                        return;
+                    }
+
+                    Computer.ram.setValue(getByteInLine());
+                }
+            } else {// Vazio
+                terminal.outError();
+            }
+        } else if (line.startsWith("val")) {
+            removeFlag("value");
+            removeFlag("val");
+            Computer.ram.setValue(getByteInLine());
+
+        } else if (line.startsWith("in")) {
+            removeFlag("in");
+            Computer.ram.setInput(getBoolInLine());
+
+        } else if (line.startsWith("out")) {
+            removeFlag("out");
+            Computer.ram.setOutput(getBoolInLine());
+
+        } else if (line.startsWith("write")) {
+            removeFlag("write");
+            Computer.ram.setWriteRead(false);
+
+        } else if (line.startsWith("read")) {
+            removeFlag("read");
+            Computer.ram.setWriteRead(true);
+
+        } else if (line.startsWith("wr")) {
+            removeFlag("wr");
+            Computer.ram.setWriteRead(getBoolInLine());
+        } else {
+            terminal.outError();
+        }
+    }
+
+    private byte getByteInLine() {
+        if (line.isEmpty())
+            throw new NullPointerException();
+
+        if (line.startsWith("b")) {
+            removeFlag("b");
+            return (byte) (Integer.parseInt(line, 2) & 0xFF);
+        } else
+            return (byte) (Integer.parseInt(line) & 0xFF);
+    }
+
+    private boolean getBoolInLine() {
+        if (line.isEmpty())
+            throw new NullPointerException();
+
+        return line.equalsIgnoreCase("true") || line.equals("1");
+    }
+
+    private String getBit(boolean b) {
+        if (b)
+            return "1";
+
+        return "0";
+    }
+
+    private void asm() {
+        File file = Computer.screen.chooseFile();
+
+        if (file != null) {
+            try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                String fileLine;
+                int count = 1, compiled = 0;
+
+                while ((fileLine = br.readLine()) != null) {
+                    try {
+                        if (fileLine.contains(".org"))
+                            compiled = Util.compileLine(fileLine);
+                        else if (fileLine.contains(".end")) {
+                            terminal.outln("Line " + count + " compiled!");
+                            break;
+                        } else {
+                            if (compiled > Computer.ram.getSize()) {
+                                terminal.outError("Maximum RAM size exceeded!");
+                                break;
+                            }
+
+                            Computer.ram.setContent(compiled, Util.compileLine(fileLine));
+                            compiled++;
+                        }
+
+                        terminal.outln("Line " + count + " compiled!");
+                    } catch (Exception ex) {
+                        // Pular os comentários
+                        if (!ex.getMessage().isEmpty())
+                            continue;
+
+                        terminal.outError("Line " + count + " not compiled!");
+                    }
+
+                    count++;
+                }
+            } catch (IOException ex) {
+                terminal.outError("File import failed!");
             }
         }
     }

@@ -5,6 +5,8 @@ import Screen.Panel.PanelCounter;
 import Screen.Panel.PanelBus;
 import Screen.Panel.PanelRegister;
 import Screen.Panel.PanelClock;
+import Screen.Panel.PanelControl;
+import Screen.Panel.PanelMAR;
 import Screen.Panel.PanelRAM;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -29,12 +31,15 @@ public class ViewScreen extends JFrame {
 
     protected final PanelALU pALU = new PanelALU();
     protected final PanelRAM pRAM = new PanelRAM();
+    protected final PanelMAR pMAR = new PanelMAR();
     protected final PanelBus pBus = new PanelBus();
     protected final PanelClock pClock = new PanelClock();
+    protected final PanelControl pControl = new PanelControl();
     protected final PanelCounter pCounter = new PanelCounter();
     protected final PanelRegister pBRegister = new PanelRegister("B Register");
     protected final PanelRegister pAccumulator = new PanelRegister("Accumulator Register");
     protected final PanelRegister pInstruction = new PanelRegister("Instruction Register");
+    protected final PanelRegister pOutRegister = new PanelRegister("Output Register");
 
     protected TerminalIO txtTerminal;
 
@@ -44,11 +49,11 @@ public class ViewScreen extends JFrame {
     }
 
     private void initProperties() {
-        //setLayout(new MigLayout());
         setSize(SIZE);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setTitle(TITLE);
+        setExtendedState(MAXIMIZED_BOTH);
     }
 
     private void initComponents() {
@@ -61,14 +66,17 @@ public class ViewScreen extends JFrame {
 
         panelComputer.setBackground(new Color(245, 245, 245));
 
-        panelComputer.add(pCounter, "center");
-        panelComputer.add(pBus, "center");
-        panelComputer.add(pAccumulator, "center, wrap");
-        panelComputer.add(pRAM, "center");
-        panelComputer.add(pClock, "center, spany");
-        panelComputer.add(pALU, "center, wrap");
         panelComputer.add(pInstruction, "center");
-        panelComputer.add(pBRegister, "center");
+        panelComputer.add(pCounter, "center");
+        panelComputer.add(pAccumulator, "center, wrap");
+        panelComputer.add(pMAR, "center");
+        panelComputer.add(pClock, "center");
+        panelComputer.add(pALU, "center, wrap");
+        panelComputer.add(pRAM, "center, spany");
+        panelComputer.add(pControl, "center");
+        panelComputer.add(pBRegister, "center, wrap");
+        panelComputer.add(pBus, "skip, center");
+        panelComputer.add(pOutRegister, "center");
 
         splitPane = new JSplitPane(
                 JSplitPane.VERTICAL_SPLIT,
@@ -77,8 +85,7 @@ public class ViewScreen extends JFrame {
         );
 
         splitPane.setOneTouchExpandable(true);
-        splitPane.setDividerLocation(420);
-        //splitPane.setResizeWeight(0.7);
+        splitPane.setResizeWeight(0.86);
 
         add(splitPane);
     }

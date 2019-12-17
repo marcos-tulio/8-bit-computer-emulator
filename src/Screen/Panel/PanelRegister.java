@@ -2,7 +2,7 @@ package Screen.Panel;
 
 import Model.PanelWithCicle;
 import Screen.Cicle;
-import Screen.Util;
+import Model.Util;
 import javax.swing.JLabel;
 import javax.swing.border.EtchedBorder;
 import net.miginfocom.swing.MigLayout;
@@ -22,9 +22,9 @@ public class PanelRegister extends PanelWithCicle {
         setBorder(new EtchedBorder());
         setLayout(new MigLayout("w 280:280:280"));
 
-        add(Util.lblTitle(txt), "span, growx, pushx, wrap");
+        add(Util.createTitleLabel(txt), "span, growx, pushx, wrap");
         
-        add(Util.label("Value: "));
+        add(Util.createLabel("Value: "));
         for (Cicle signal : value) {
             add(signal, "pushx");
         }
@@ -33,9 +33,9 @@ public class PanelRegister extends PanelWithCicle {
         txtValue.setHorizontalAlignment(JLabel.RIGHT);
 
         add(txtValue, "skip, newline, growx, pushx, span");
-        add(Util.label("Input: "), "newline");
+        add(Util.createLabel("Input: "), "newline");
         add(input);
-        add(Util.label("Output: "), "split, span, right");
+        add(Util.createLabel("Output: "), "split, span, right");
         add(output);
     }
 
@@ -45,7 +45,7 @@ public class PanelRegister extends PanelWithCicle {
         else
             input.setGray();
 
-        repaint();
+       //repaint();
     }
 
     public void setOutput(boolean value) {
@@ -54,6 +54,6 @@ public class PanelRegister extends PanelWithCicle {
         else
             output.setGray();
 
-        repaint();
+       //repaint();
     }
 }

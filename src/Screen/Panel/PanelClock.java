@@ -2,7 +2,7 @@ package Screen.Panel;
 
 import Screen.Cicle;
 import Screen.Oscillator;
-import Screen.Util;
+import Model.Util;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -18,8 +18,8 @@ public final class PanelClock extends JPanel {
     private final Cicle halt = new Cicle();
     private final Cicle output = new Cicle();
     
-    private final JTextField txtAuto = Util.txt(JLabel.CENTER);
-    private final JTextField txtFrequency = Util.txt(JLabel.CENTER);
+    private final JTextField txtAuto = Util.createTextField(JLabel.CENTER);
+    private final JTextField txtFrequency = Util.createTextField(JLabel.CENTER);
     
     private final Oscillator oscillator = new Oscillator();
     
@@ -27,14 +27,14 @@ public final class PanelClock extends JPanel {
         setBorder(new EtchedBorder());
         setLayout(new MigLayout("w 280:280:280"));
         
-        add(Util.lblTitle("Clock"), "span, growx, pushx, wrap");
-        add(Util.label("Mode: "), "newline, right");
+        add(Util.createTitleLabel("Clock"), "span, growx, pushx, wrap");
+        add(Util.createLabel("Mode: "), "newline, right");
         add(txtAuto, "growx, pushx, span");
-        add(Util.label("Frequency: "), "newline");
+        add(Util.createLabel("Frequency: "), "newline");
         add(txtFrequency, "w 100%, span");
-        add(Util.label("Halt: "), "newline, right");
+        add(Util.createLabel("Halt: "), "newline, right");
         add(halt);
-        add(Util.label("Output: "), "split");
+        add(Util.createLabel("Output: "), "split");
         add(output, "wrap");
         add(oscillator, "span, center");
     }
@@ -49,7 +49,7 @@ public final class PanelClock extends JPanel {
         else
             halt.setGray();
         
-        repaint();
+       //repaint();
     }
     
     public void setOutput(boolean value) {
@@ -58,7 +58,7 @@ public final class PanelClock extends JPanel {
         else
             output.setGray();
         
-        repaint();
+       //repaint();
     }
     
     public void setFrequency(float frequency) {

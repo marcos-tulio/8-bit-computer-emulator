@@ -1,45 +1,57 @@
 package Module;
 
+import Emulator.Computer;
+
 /**
  *
  * @author MrCapybara
  */
-public class RAM {
+public class RAM extends Register {
 
-    private final byte value[] = new byte[16];
-    private boolean input = false;
-    private boolean output = false;
+    private final byte content[] = new byte[16];
+    private boolean writeRead = true;           // write = false
 
-    public byte getValue(int index) {
-        return value[index];
+    public boolean isWriteRead() {
+        return writeRead;
     }
 
-    public void setValue(int index, byte value) {
-        this.value[index] = value;
+    public boolean isRead() {
+        return isWriteRead();
+    }
+
+    public boolean isWrite() {
+        return isWriteRead() == false;
+    }
+
+    public void setWriteRead(boolean writeRead) {
+        this.writeRead = writeRead;
+    }
+
+    public byte getContent(int index) {
+        return content[index];
+    }
+
+    public void setContentInAddress(int address) {
+        this.content[address] = getValue();
+    }
+
+    public void setContent(int index, byte value) {
+        this.content[index] = value;
     }
 
     public byte[] getAllValues() {
-        return value;
+        return content;
     }
 
-    public int getSize(){
-        return value.length;
-    }
-    
-    public boolean isInput() {
-        return input;
+    public int getSize() {
+        return content.length;
     }
 
-    public void setInput(boolean input) {
-        this.input = input;
+    @Override
+    public void risingEdge() {
+        if (isInput()) {
+            setValue(Computer.bus.getValue());
+            setContentInAddress(Computer.mar.getValue());
+        }
     }
-
-    public boolean isOutput() {
-        return output;
-    }
-
-    public void setOutput(boolean output) {
-        this.output = output;
-    }
-
 }
