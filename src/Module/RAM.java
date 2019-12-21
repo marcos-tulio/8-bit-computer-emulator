@@ -54,4 +54,14 @@ public class RAM extends Register {
             setContentInAddress(Computer.mar.getValue());
         }
     }
+
+    @Override
+    public void reset() {
+        setWriteRead(true);
+    }
+
+    public void clear() {
+        for (int i = 0; i < getSize(); i++)
+            content[i] = 0x00;
+    }
 }

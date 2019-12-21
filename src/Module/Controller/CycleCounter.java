@@ -13,7 +13,6 @@ public class CycleCounter implements EdgeTrigger {
 
     @Override
     public void risingEdge() {
-        // Não usado
         Computer.refreshParallelBits();
     }
 

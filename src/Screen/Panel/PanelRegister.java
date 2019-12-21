@@ -17,7 +17,7 @@ public class PanelRegister extends PanelWithCicle {
     private final Cicle output = new Cicle();
 
     public PanelRegister(String txt) {
-        super(8); // Chama a classe pai com a quantidade circulos desejada
+        super(8); // Chama a classe pai com a quantidade de círculos desejada
         
         setBorder(new EtchedBorder());
         setLayout(new MigLayout("w 280:280:280"));
@@ -44,8 +44,6 @@ public class PanelRegister extends PanelWithCicle {
             input.setGreen();
         else
             input.setGray();
-
-       //repaint();
     }
 
     public void setOutput(boolean value) {
@@ -53,7 +51,5 @@ public class PanelRegister extends PanelWithCicle {
             output.setGreen();
         else
             output.setGray();
-
-       //repaint();
     }
 }

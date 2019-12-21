@@ -31,7 +31,10 @@ public class PanelWithCicle extends JPanel {
                 this.value[(this.value.length - 1) - i].setGray();  // Pos. complementar 
         }
 
-        txtValue.setText((value & 0xFF) + "");
+        if (value < 0)
+            txtValue.setText((value) + " or " + (value & 0xFF));
+        else
+            txtValue.setText(value + "");
     }
 
     public void changeColor(boolean value, Cicle cicle) {

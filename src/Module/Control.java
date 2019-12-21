@@ -65,6 +65,7 @@ public final class Control {
     }
 
     public void reset() {
+        Computer.ram.reset();
         Computer.mar.reset();
         Computer.output.reset();
         Computer.counter.reset();

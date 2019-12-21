@@ -1,17 +1,14 @@
 package Emulator;
 
-import Model.Util;
+import Model.AssemblyCompiler;
 import Module.Register;
 import Screen.TerminalIO;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -124,10 +121,13 @@ public class CtrlTerminal {
                 stopRun = false;
 
                 terminal.outln("Computer running...");
-                while (!stopRun) {
+
+                Computer.control.getClock().setAuto(true);
+
+                while (!stopRun)
                     Computer.control.getClock().fullCycle();
-                    Computer.control.getClock().setAuto(true);
-                }
+
+                Computer.control.getClock().setAuto(false);
             });
             threadRun.start();
         } else
@@ -142,14 +142,6 @@ public class CtrlTerminal {
                 terminal.println(Computer.control.getClock().getFrequency() + "Hz");
             else
                 Computer.control.getClock().setFrequency(Float.parseFloat(line));
-
-        } else if (line.startsWith("auto")) {
-            removeFlag("auto");
-
-            if (line.isEmpty())
-                terminal.println(getBit(Computer.control.getClock().isAuto()));
-            else
-                Computer.control.getClock().setAuto(getBoolInLine());
 
         } else if (line.startsWith("halt")) {
             removeFlag("halt");
@@ -331,6 +323,11 @@ public class CtrlTerminal {
             removeFlag("in");
             Computer.ram.setInput(getBoolInLine());
 
+        } else if (line.startsWith("reset") || line.startsWith("clear")) {
+            removeFlag("reset");
+            removeFlag("clear");
+            Computer.ram.clear();
+
         } else if (line.startsWith("out")) {
             removeFlag("out");
             Computer.ram.setOutput(getBoolInLine());
@@ -381,13 +378,15 @@ public class CtrlTerminal {
 
         if (file != null) {
             try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                Computer.ram.clear(); // Limpar a memória
+                
                 String fileLine;
                 int count = 1, compiled = 0;
-
+                
                 while ((fileLine = br.readLine()) != null) {
                     try {
                         if (fileLine.contains(".org"))
-                            compiled = Util.compileLine(fileLine);
+                            compiled = AssemblyCompiler.compileLine(fileLine);
                         else if (fileLine.contains(".end")) {
                             terminal.outln("Line " + count + " compiled!");
                             break;
@@ -397,7 +396,7 @@ public class CtrlTerminal {
                                 break;
                             }
 
-                            Computer.ram.setContent(compiled, Util.compileLine(fileLine));
+                            Computer.ram.setContent(compiled, AssemblyCompiler.compileLine(fileLine));
                             compiled++;
                         }
 
