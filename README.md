@@ -24,7 +24,7 @@ Comando|Descrição|
 -|-|
 `run` |Inicia o computador
 `stop`|Para o computador
-`reset`|Volta o computador ao estado inicial: limpa os regitros; não limpa a RAM
+`reset`|Volta o computador ao estado inicial: limpa os registros; não limpa a RAM
 `asm`|Carrega um código em `Assembly` para a RAM -- compatível com o computador desenvolvido na série.
 `clear`|Limpa o terminal (`Ctrl + l`)
 
