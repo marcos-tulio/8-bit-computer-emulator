@@ -9,7 +9,7 @@
  
 ## Instalação
 ```|
-$ git clone https://github.com/mrcapybara/8-bit-computer-emulator.git
+$ git clone https://github.com/marcos-tulio/8-bit-computer-emulator.git
 $ java -jar 8-bit-computer-emulator/compiled/8-bit-computer-emulator.jar
 ```
  
