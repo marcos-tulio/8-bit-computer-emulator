@@ -15,7 +15,7 @@ $ java -jar 8-bit-computer-emulator/compiled/8-bit-computer-emulator.jar
  
 ## Como usar
 
-Todos os comandos são executados via terminal interno obdecendo os seguintes critérios:
+Todos os comandos são executados via terminal interno obedecendo os seguintes critérios:
 
 - Escritos em caixa baixa; 
 - Os `valores_logicos` são: `true` ou `1` e `false` ou `0`;
